@@ -4,15 +4,13 @@
 import subprocess
 import signal
 import buttonshim
-import inkyphat
 import os
-from PIL import Image, ImageFont
-import inkyphat
+from PIL import Image, ImageFont, ImageDraw
+from inky import InkyPHAT
 import time
 import urllib2
 import textwrap
 import twitter 
-#pip install python-twitter
 
 
 def flash_led(interval, times, r, g, b):
@@ -92,20 +90,11 @@ def button_a(button, pressed):
     buttonflash()
     runprocess("/home/pi/Pimoroni/inkyphat/examples/qr.py red 'http://www.electromaker.io'")
 
-# Button B - displays Twitter feed example - you need to sign up for a twitter app api and fill in the details below 
+# Button B - runs weather example
 @buttonshim.on_release(buttonshim.BUTTON_B)
 def button_b(button, pressed):
     buttonflash()
-    inkyphat.set_colour('red')
-    api = twitter.Api(consumer_key='-',
-    consumer_secret='-',
-    access_token_key='-',
-    access_token_secret='-')
-
-    search = api.GetUserTimeline(screen_name="ElectromakerIO", count=3)
-    for tweet in search:
-        tweettext = tweet.text
-        printtoscreen("Twitter",tweettext)
+    runprocess('/home/pi/Pimoroni/inky/examples/phat/weather_home.py --type "phat" --colour "red" --name "Anne"')
 
 
 # Button C - runs the weather - IP - time/date and system info splash screen - updates every 10 minutes
@@ -122,16 +111,12 @@ def button_c(button, pressed):
 @buttonshim.on_release(buttonshim.BUTTON_D)
 def button_d(button, pressed):
     buttonflash()
-    inkyphat.set_colour('red')
-    inkyphat.set_rotation(180)
-    inkyphat.set_image(Image.open("/home/pi/Pimoroni/inkyphat/examples/resources/oct2.png"))
-    inkyphat.show()
 
 # Button E - Runs the name badge example
 @buttonshim.on_release(buttonshim.BUTTON_E)
 def button_e(button, pressed):
     buttonflash()
-    runprocess('/home/pi/Pimoroni/inkyphat/examples/hello.py "SIMON BUGLER" red')
+    runprocess('/home/pi/Pimoroni/inky/examples/name-badge.py --type "phat" --colour "red" --name "Anne"')
 
 
 # BUTTTON HOLDS

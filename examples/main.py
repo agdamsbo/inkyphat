@@ -36,40 +36,6 @@ def runprocess(file):
     except Exception as error:
         printtoscreen("Error", error)
 
-def printtoscreen(title="", content="Error"):
-    
-    # draw a rectangle of white to clear previous screen if using a loop - as in twitter output
-    inkyphat.rectangle([(0, 0), (212, 104)], fill=inkyphat.WHITE, outline=None)
-
-    if len(content) < 200:
-        fontsize = 10
-        charwidth = 29
-        lineheight = 9
-    else:
-        fontsize = 6
-        charwidth = 41
-        lineheight = 6
-
-    font = ImageFont.truetype("/home/pi/Pimoroni/inkyphat/fonts/elec.ttf", fontsize)
-    fontmedium = ImageFont.truetype("/home/pi/Pimoroni/inkyphat/fonts/elec.ttf", 10)
-    inkyphat.set_rotation(180)
-    inkyphat.set_border(inkyphat.BLACK)
-
-    # title
-    inkyphat.rectangle([(1, 1), (210, 13)], fill=inkyphat.BLACK, outline=None)
-    inkyphat.text((2, 3), title, inkyphat.WHITE, font=fontmedium)
-
-    # main body of text - line wrapped 
-    y = 17
-    for line in textwrap.wrap(content, charwidth):
-         inkyphat.text((2, y), line, inkyphat.BLACK, font=font)
-         y = y + lineheight
-
-    flash_led(0.5, 3, 0, 255, 0)
-
-    inkyphat.show()
-
-    flash_led(0.05, 5, 0, 0, 255)
 
 def wait_for_internet_connection():
     while True:
@@ -90,11 +56,11 @@ def button_a(button, pressed):
     buttonflash()
     runprocess("/home/pi/Pimoroni/inkyphat/examples/qr.py red 'http://www.electromaker.io'")
 
-# Button B - runs weather example
+# Button B - runs home weather script after weather example
 @buttonshim.on_release(buttonshim.BUTTON_B)
 def button_b(button, pressed):
     buttonflash()
-    runprocess('/home/pi/Pimoroni/inky/examples/phat/weather_home.py --type "phat" --colour "red" --name "Anne"')
+    runprocess('/home/pi/scripts/inky/phat/weather_home.py')
 
 
 # Button C - runs the weather - IP - time/date and system info splash screen - updates every 10 minutes
@@ -104,7 +70,7 @@ def button_c(button, pressed):
     # Refresh it every 600 seconds to stop loop must restart service process - hold button A
     starttime=time.time()
     while True:
-        runprocess("/home/pi/Pimoroni/inkyphat/examples/info.py")
+        runprocess("/home/pi/scripts/phat/info.py")
         time.sleep(600.0 - ((time.time() - starttime) % 600.0))
 
 # Button D - Runs a image display example
@@ -116,7 +82,7 @@ def button_d(button, pressed):
 @buttonshim.on_release(buttonshim.BUTTON_E)
 def button_e(button, pressed):
     buttonflash()
-    runprocess('/home/pi/Pimoroni/inky/examples/name-badge.py --type "phat" --colour "red" --name "Anne"')
+    runprocess('/home/pi/scripts/phat/sign.py --type "phat" --colour "red" --name "Anne"')
 
 
 # BUTTTON HOLDS

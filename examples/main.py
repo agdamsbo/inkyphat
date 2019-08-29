@@ -60,7 +60,7 @@ def button_a(button, pressed):
 @buttonshim.on_release(buttonshim.BUTTON_B)
 def button_b(button, pressed):
     buttonflash()
-    runprocess('/home/pi/scripts/inky/phat/weather_home.py')
+    runprocess('/home/pi/scripts/inky/phat/weather-home.py')
 
 
 # Button C - runs the weather - IP - time/date and system info splash screen - updates every 10 minutes
@@ -91,7 +91,7 @@ def button_e(button, pressed):
 @buttonshim.on_hold(buttonshim.BUTTON_A)
 def button_a_hold(button):
     flash_led(0.05, 3, 255, 0, 0)
-    os.system('sudo svc -k /etc/service/rainbow/')
+    os.system('sudo svc -k /etc/service/phat/')
 
 # Reboots Pi
 @buttonshim.on_hold(buttonshim.BUTTON_B)

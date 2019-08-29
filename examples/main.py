@@ -59,7 +59,7 @@ def button_a(button, pressed):
 @buttonshim.on_release(buttonshim.BUTTON_B)
 def button_b(button, pressed):
     buttonflash()
-    runprocess('/home/pi/scripts/inky/phat/weather-home.py')
+    runprocess('/home/pi/scripts/phat/weather-home.py')
 
 
 # Button C - runs the weather - IP - time/date and system info splash screen - updates every 10 minutes

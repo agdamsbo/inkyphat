@@ -10,7 +10,6 @@ from inky import InkyPHAT
 import time
 import urllib2
 import textwrap
-import twitter 
 
 
 def flash_led(interval, times, r, g, b):

@@ -4,13 +4,27 @@
 import json
 import time
 import urllib
-from PIL import Image, ImageFont
+import glob
+import argparse
+from PIL import Image, ImageFont, ImageDraw
+from font_fredoka_one import FredokaOne
 import subprocess
-import inkyphat
+from inky import InkyPHAT
+
 try:
     import requests
 except ImportError:
     exit("This script requires the requests module\nInstall with: sudo pip install requests")
+
+try:
+    import geocoder
+except ImportError:
+    exit("This script requires the geocoder module\nInstall with: sudo pip install geocoder")
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    exit("This script requires the bs4 module\nInstall with: sudo pip install beautifulsoup4")
 
 # Functions
 
@@ -89,69 +103,101 @@ def encode(qs):
         val = urllib.parse.urlencode(qs).replace("+", "%20")
     return val
 
-def get_weather(address):
-    # https://developer.yahoo.com/weather/documentation.html
-    base = "https://query.yahooapis.com/v1/public/yql?"
-    query = "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\""+address+"\")"
-    qs={"q": query, "format": "json", "env": "store://datatables.org/alltableswithkeys"}
 
-    uri = base + encode(qs)                                        
+# Command line arguments to set display colour
 
-    res = requests.get(uri)
-    if(res.status_code==200):
-        json_data = json.loads(res.text)
-        return json_data
+parser = argparse.ArgumentParser()
+parser.add_argument('--colour', '-c', type=str, required=True, choices=["red", "black", "yellow"], help="ePaper display colour")
+args = parser.parse_args()
 
-    return {}
+# Set up the display
 
-print ("Functions loaded")
+colour = args.colour
+inky_display = InkyPHAT(colour)
+inky_display.set_border(inky_display.BLACK)
 
-# Processing
+# Details to customise your weather display
 
-datetime = time.strftime("%d/%m %H:%M")
-
-CITY = "Swanage"
+CITY = "Sheffield"
 COUNTRYCODE = "GB"
 WARNING_TEMP = 25.0
 
-location_string = "{city}, {countrycode}".format(city=CITY, countrycode=COUNTRYCODE)
+# Convert a city name and country code to latitude and longitude
+def get_coords(address):
+    g = geocoder.arcgis(address)
+    coords = g.latlng
+    return coords
 
+# Query Dark Sky (https://darksky.net/) to scrape current weather data
+def get_weather(address):
+    coords = get_coords(address)
+    weather = {}
+    res = requests.get("https://darksky.net/forecast/{}/uk212/en".format(",".join([str(c) for c in coords])))
+    if res.status_code == 200:
+        soup = BeautifulSoup(res.content, "lxml")
+        curr = soup.find_all("span", "currently")
+        weather["summary"] = curr[0].img["alt"].split()[0]
+        weather["temperature"] = int(curr[0].find("span", "summary").text.split()[0][:-1])
+        press = soup.find_all("div", "pressure")
+        weather["pressure"] = int(press[0].find("span", "num").text)
+        return weather
+    else:
+        return weather
+
+def create_mask(source, mask=(inky_display.WHITE, inky_display.BLACK, inky_display.RED)):
+    """Create a transparency mask.
+    Takes a paletized source image and converts it into a mask
+    permitting all the colours supported by Inky pHAT (0, 1, 2)
+    or an optional list of allowed colours.
+    :param mask: Optional list of Inky pHAT colours to allow.
+    """
+    mask_image = Image.new("1", source.size)
+    w, h = source.size
+    for x in range(w):
+        for y in range(h):
+            p = source.getpixel((x, y))
+            if p in mask:
+                mask_image.putpixel((x, y), 255)
+
+    return mask_image
+
+# Dictionaries to store our icons and icon masks in
+icons = {}
+masks = {}
+
+# Get the weather data for the given location
+location_string = "{city}, {countrycode}".format(city=CITY, countrycode=COUNTRYCODE)
 weather = get_weather(location_string)
 
+# This maps the weather summary from Dark Sky
+# to the appropriate weather icons
+icon_map = {
+    "snow": ["snow", "sleet"],
+    "rain": ["rain"],
+    "cloud": ["fog", "cloudy", "partly-cloudy-day", "partly-cloudy-night"],
+    "sun": ["clear-day", "clear-night"],
+    "storm": [],
+    "wind": ["wind"]
+}
+
+# Placeholder variables
 pressure = 0
-pressurestatestr = ""
-winddir = 0
-windchill = 0
-windspeed = 0.0
 temperature = 0
-weathertext0 = ""
-weathertext1 = ""
-weathertext2 = ""
+weather_icon = None
 
-if "channel" in weather["query"]["results"]:
-    results = weather["query"]["results"]["channel"]
-    pressure = results["atmosphere"]["pressure"]
-    pressurestate = results["atmosphere"]["rising"]
-    winddir = degrees_to_cardinal(int(results["wind"]["direction"]))
-    windchill = (int(results["wind"]["chill"]) - 32) * .5556
-    windspeed = results["wind"]["speed"]
-    temperature = (int(results["item"]["forecast"][0]["high"]) - 32) * .5556
-    weathertext0 = results["item"]["forecast"][0]["text"]
-    weathertext1 = results["item"]["forecast"][1]["text"]
-    weathertext2 = results["item"]["forecast"][2]["text"]
+if weather:
+    temperature = weather["temperature"]
+    pressure = weather["pressure"]
+    summary = weather["summary"]
 
-
-    if pressurestate == "0":
-        pressurestatestr = "Steady"
-    elif pressurestate == "1":
-        pressurestatestr = "Rising"
-    elif pressurestate == "2":
-        pressurestatestr = "Falling"
-
+    for icon in icon_map:
+        if summary in icon_map[icon]:
+            weather_icon = icon
+            break
 
 else:
     print("Warning, no weather information found!")
-
+    
 print ("Processing done")
 # Display
 
@@ -159,7 +205,7 @@ font = ImageFont.truetype("/home/pi/Pimoroni/inkyphat/fonts/elec.ttf", 10)
 fontsm = ImageFont.truetype("/home/pi/Pimoroni/inkyphat/fonts/elec.ttf", 6)
 fontlg = ImageFont.truetype("/home/pi/Pimoroni/inkyphat/fonts/elec.ttf", 16)
 
-inkyphat.set_rotation(180)
+inky_display.set_rotation(180)
 inkyphat.set_colour('red')
 inkyphat.set_border(inkyphat.BLACK)
 

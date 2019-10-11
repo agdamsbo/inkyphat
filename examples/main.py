@@ -59,7 +59,7 @@ def button_a(button, pressed):
 @buttonshim.on_release(buttonshim.BUTTON_B)
 def button_b(button, pressed):
     buttonflash()
-    runprocess('/home/pi/scripts/phat/weather-home.py')
+    runprocess('/home/pi/scripts/phat/weather-home.py --type "phat" --colour "red"')
 
 
 # Button C - runs the weather - IP - time/date and system info splash screen - updates every 10 minutes
@@ -76,6 +76,7 @@ def button_c(button, pressed):
 @buttonshim.on_release(buttonshim.BUTTON_D)
 def button_d(button, pressed):
     buttonflash()
+    runprocess('/home/pi/scripts/phat/sign.py --type "phat" --colour "red" --name "Andreas"')
 
 # Button E - Runs the name badge example
 @buttonshim.on_release(buttonshim.BUTTON_E)

@@ -40,7 +40,7 @@ def wait_for_internet_connection():
     while True:
         try:
             response = urllib2.urlopen('http://www.google.com',timeout=1)
-            runprocess("/home/pi/scripts/phat/weather-home.py")
+            runprocess('/home/pi/scripts/phat/weather-home.py  --type "phat" --colour "red"')
             return
         except urllib2.URLError:
             pass
